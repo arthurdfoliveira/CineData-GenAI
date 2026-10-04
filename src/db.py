@@ -9,7 +9,7 @@ load_dotenv()
 
 DB_PATH = os.getenv("DB_PATH", "data/cinerocket.db")
 MAX_ROWS = 50          # máximo de linhas devolvidas ao modelo
-TIMEOUT_S = 15         # tempo máximo de uma consulta
+TIMEOUT_S = 30         # tempo máximo de uma consulta
 MAX_CHARS_CELULA = 200 # corta textos longos (sinopse, reviews) pra economizar tokens
 
 # Guardrail extra (o modo read-only já impede escrita no banco)
