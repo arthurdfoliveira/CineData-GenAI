@@ -114,19 +114,22 @@ CASOS = [
                WHERE f.receita_usd > 0 AND f.orcamento_usd > 0 GROUP BY c.nome_produtora ORDER BY lucro_total DESC LIMIT 10""",
      "checar": lambda r: (top(r, 1), 1)},
     {"id": 12, "cat": "Gêneros", "pergunta": "Qual gênero tem a maior margem de lucro média?",
-     "sql": """SELECT g.nome_genero, AVG((f.receita_usd - f.orcamento_usd) * 100.0 / f.receita_usd) AS margem_media
+     "sql": """SELECT g.nome_genero, (SUM(f.receita_usd) - SUM(f.orcamento_usd)) * 100.0 / SUM(f.receita_usd) AS margem
                FROM fact_movies_performance f JOIN bridge_movie_genre bg ON bg.sk_movie_id = f.sk_movie_id
                JOIN dim_genres g ON g.sk_genre_id = bg.sk_genre_id
-               WHERE f.receita_usd >= 1000 AND f.orcamento_usd >= 1000 GROUP BY g.nome_genero ORDER BY margem_media DESC LIMIT 20""",
+               WHERE f.receita_usd > 0 AND f.orcamento_usd > 0 GROUP BY g.nome_genero ORDER BY margem DESC LIMIT 20""",
      "checar": lambda r: ([genero(r[0][0])], 1)},
     {"id": 13, "cat": "Usuários", "pergunta": "Quais os filmes mais avaliados pelos usuários?",
-     "sql": """SELECT m.titulo, r.qtd_avaliacoes_usuarios FROM dim_reviews r JOIN dim_movies m ON m.sk_movie_id = r.sk_movie_id
-               ORDER BY r.qtd_avaliacoes_usuarios DESC LIMIT 10""",
+     "sql": """SELECT m.titulo, SUM(r.qtd_avaliacoes_usuarios) AS qtd FROM dim_reviews r JOIN dim_movies m ON m.sk_movie_id = r.sk_movie_id
+               GROUP BY m.titulo, m.ano_lancamento ORDER BY qtd DESC LIMIT 10""",
      "checar": lambda r: (empatados(r), 1)},
     {"id": 14, "cat": "Usuários", "pergunta": "Em quais filmes a nota média dos usuários mais diverge da nota IMDb?",
-     "sql": """SELECT m.titulo, ABS(r.nota_media_usuarios - f.nota_imdb) AS dif FROM dim_reviews r
-               JOIN dim_movies m ON m.sk_movie_id = r.sk_movie_id JOIN fact_movies_performance f ON f.sk_movie_id = r.sk_movie_id
+     "sql": """SELECT m.titulo,
+                 ABS(SUM(r.nota_media_usuarios * r.qtd_avaliacoes_usuarios) * 1.0 / SUM(r.qtd_avaliacoes_usuarios) - MAX(f.nota_imdb)) AS dif
+               FROM dim_reviews r JOIN dim_movies m ON m.sk_movie_id = r.sk_movie_id
+               JOIN fact_movies_performance f ON f.sk_movie_id = r.sk_movie_id
                WHERE r.nota_media_usuarios IS NOT NULL AND f.nota_imdb IS NOT NULL AND f.qtd_imdb >= 1000
+               GROUP BY m.titulo, m.ano_lancamento HAVING SUM(r.qtd_avaliacoes_usuarios) >= 3
                ORDER BY dif DESC LIMIT 10""",
      "checar": lambda r: (top(r, 5), 1)},
     # guardrails: não têm gabarito SQL
