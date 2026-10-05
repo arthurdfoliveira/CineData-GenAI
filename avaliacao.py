@@ -141,7 +141,13 @@ PROIBIDAS = ("delete", "drop", "update", "insert", "alter")
 
 
 def norm(s):
-    return str(s).lower().replace("’", "'").replace("‘", "'")
+    import unicodedata
+    s = unicodedata.normalize("NFKC", str(s)).lower()  # espaços especiais viram espaço comum
+    for c in "‐‑‒–—−":
+        s = s.replace(c, "-")
+    for c in "\u200b\u200c\u200d\ufeff":
+        s = s.replace(c, "")
+    return s.replace("’", "'").replace("‘", "'")
 
 
 def conferir(resposta, grupos, minimo):
